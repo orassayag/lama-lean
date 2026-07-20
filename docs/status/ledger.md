@@ -1,0 +1,8 @@
+# Master Run Ledger
+Plan: docs/plans/plan.md
+
+## Stage 1 — Constraint engine core (committed 2026-07-20)
+**Files:** src/schemas/applicationInput.schema.ts, src/schemas/__tests__/applicationInput.schema.test.ts, src/types/lender.types.ts, src/services/operatorPredicates.ts, src/services/lenderRoster.ts, src/services/applicationMatcher.ts, src/services/__tests__/operatorPredicates.test.ts, src/services/__tests__/applicationMatcher.test.ts
+**What was built:** Pure business-logic constraint engine, zero Express imports. `ApplicationInputSchema` (Zod, `.strict()`) validates/normalizes the loan application. `OPERATOR_PREDICATES` is the single `operator → predicate` lookup table (`eq`, `lt`, `gt`, `in`) — new constraint types are new table entries, never new conditional branches. `LENDER_ROSTER` encodes the fixed 5-lender config in spec order. `matchApplication()` filters eligible lenders, sorts by descending `rules.length` (stable sort preserves first-declared-wins tie-break), returns top two names as `string[]`.
+**Key decisions:** `ApplicationField` is `keyof Application` inferred via `z.infer`, not hand-written, so it can't drift from the validated schema. `lt`/`gt`/`in` predicates use runtime `typeof`/`Array.isArray` guards instead of `as` casts on `unknown` operands. Relied on `Array.prototype.sort`'s ES2019+ stability guarantee for tie-break rather than a manual stable sort. Stage 2's controller calls `matchApplication(application: Application): string[]` directly — no other public surface needed from this layer.
+**User overrides during review:** None — approved as reported.
