@@ -88,6 +88,20 @@ curl -X POST http://localhost:3000/applicationMatch \
 For Postman: create a `POST` request to the URL above, set the `Content-Type:
 application/json` header, and paste the example body above into the raw JSON body.
 
+### Postman collection
+
+A ready-to-import collection with 12 pre-built, scripted test cases (priority ordering,
+tie-breaking by declaration order, no-match, case-insensitivity, the optional `industry`
+field, validation errors, and a health check) lives in `postman/`:
+
+- `postman/lama-lean.postman_collection.json`
+- `postman/lama-lean.postman_environment.json` (sets `{{baseUrl}}`, default
+  `http://localhost:3000`)
+
+In Postman: **File → Import** both files, select the "lama-lean local" environment, start
+the dev server (`pnpm run dev`), then run any request individually or the whole folder via
+**Run collection** — each request has a `Tests` script that asserts the expected response.
+
 ## Persistence model
 
 The API currently holds the lender roster in-memory (`LENDER_ROSTER` in

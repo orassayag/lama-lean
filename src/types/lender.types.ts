@@ -1,6 +1,6 @@
 import type { Application } from '../schemas/applicationInput.schema.js';
 
-export type Operator = 'eq' | 'lt' | 'gt' | 'in';
+export type Operator = 'eq' | 'lt' | 'gt' | 'in' | 'co';
 
 export type ApplicationField = keyof Application;
 

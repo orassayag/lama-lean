@@ -43,4 +43,16 @@ describe('OPERATOR_PREDICATES', () => {
       expect(OPERATOR_PREDICATES.in(fieldValue, ruleValue)).toBe(expected);
     });
   });
+
+  describe('co', () => {
+    it.each([
+      ['field contains rule substring', 'fine dining restaurant', 'restaurant', true],
+      ['exact string match', 'restaurant', 'restaurant', true],
+      ['substring absent', 'retail store', 'restaurant', false],
+      ['non-string field value', 500, 'restaurant', false],
+      ['non-string rule value', 'restaurant', 5, false],
+    ])('%s', (_label, fieldValue, ruleValue, expected) => {
+      expect(OPERATOR_PREDICATES.co(fieldValue, ruleValue)).toBe(expected);
+    });
+  });
 });

@@ -1,0 +1,335 @@
+{
+  "info": {
+    "name": "lama-lean — Loan Exchange API",
+    "description": "Manual + scripted test cases for POST /applicationMatch and GET /health. Every case's expected result was verified against a running instance of the API before being committed. Import this collection alongside lama-lean.postman_environment.json (sets {{baseUrl}}).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "http://localhost:3000" }],
+  "item": [
+    {
+      "name": "applicationMatch",
+      "item": [
+        {
+          "name": "01 - Happy path: two matches, ordered by priority",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"consumer\",\n  \"loanType\": \"student loan\",\n  \"state\": \"CA\",\n  \"riskLevel\": 75,\n  \"requestedAmount\": 30000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "First Lama Bank (2 rules) and Lama International Bank (1 rule) both qualify; HaPoalama fails on riskLevel < 60."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('returns First Lama Bank then Lama International Bank', () => {",
+                  "  pm.expect(pm.response.json()).to.eql(['First Lama Bank', 'Lama International Bank']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - Three-way match: higher rule-count lender wins",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"consumer\",\n  \"loanType\": \"student loan\",\n  \"state\": \"CA\",\n  \"riskLevel\": 50,\n  \"requestedAmount\": 30000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "Lowering riskLevel to 50 also qualifies Bank HaPoalama (3 rules). It outranks First Lama Bank (2 rules); Lama International Bank (1 rule) is truncated off the top-2 result."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('returns Bank HaPoalama then First Lama Bank', () => {",
+                  "  pm.expect(pm.response.json()).to.eql(['Bank HaPoalama', 'First Lama Bank']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 - Tie-break at 2 rules: declaration order wins",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"consumer\",\n  \"loanType\": \"line of credit\",\n  \"industry\": \"restaurant\",\n  \"state\": \"CA\",\n  \"riskLevel\": 50,\n  \"requestedAmount\": 250000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "First Lama Bank and Bank Otzar Halama both qualify with 2 rules each. requestedAmount is kept >= 200000 so Lama International Bank doesn't also qualify. Tie is broken by roster declaration order: First Lama Bank is declared first."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('returns First Lama Bank then Bank Otzar Halama', () => {",
+                  "  pm.expect(pm.response.json()).to.eql(['First Lama Bank', 'Bank Otzar Halama']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 - Tie-break at 3 rules: declaration order wins",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"business\",\n  \"loanType\": \"student loan\",\n  \"state\": \"CA\",\n  \"riskLevel\": 50,\n  \"requestedAmount\": 600000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "Bank HaPoalama and Salt and Pepper both qualify with 3 rules each. Tie is broken by roster declaration order: Bank HaPoalama is declared first."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('returns Bank HaPoalama then Salt and Pepper', () => {",
+                  "  pm.expect(pm.response.json()).to.eql(['Bank HaPoalama', 'Salt and Pepper']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 - No eligible lenders",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"consumer\",\n  \"loanType\": \"personal loan\",\n  \"state\": \"NY\",\n  \"riskLevel\": 95,\n  \"requestedAmount\": 900000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "riskLevel too high and requestedAmount too large to satisfy any lender's rules."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('returns an empty array', () => {",
+                  "  pm.expect(pm.response.json()).to.eql([]);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 - Single match only (Lama International Bank)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"consumer\",\n  \"loanType\": \"personal loan\",\n  \"state\": \"NY\",\n  \"riskLevel\": 90,\n  \"requestedAmount\": 100000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "riskLevel 90 disqualifies First Lama Bank (needs < 80); only Lama International Bank's single amount rule is satisfied."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('returns only Lama International Bank', () => {",
+                  "  pm.expect(pm.response.json()).to.eql(['Lama International Bank']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 - Case-insensitive matching",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"Consumer\",\n  \"loanType\": \"STUDENT LOAN\",\n  \"state\": \"ca\",\n  \"riskLevel\": 75,\n  \"requestedAmount\": 30000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "Same as case 01 but with mixed/upper-case string fields, to confirm the schema normalizes case before matching. Expect an identical result to case 01."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('returns the same result as case 01', () => {",
+                  "  pm.expect(pm.response.json()).to.eql(['First Lama Bank', 'Lama International Bank']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 - Optional industry field omitted",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"business\",\n  \"loanType\": \"other\",\n  \"state\": \"NY\",\n  \"riskLevel\": 50,\n  \"requestedAmount\": 600000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "industry is not sent at all — valid since it's optional. Only Salt and Pepper's rules (none of which reference industry) are satisfied."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('returns only Salt and Pepper', () => {",
+                  "  pm.expect(pm.response.json()).to.eql(['Salt and Pepper']);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 - Validation error: missing required field",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"loanType\": \"student loan\",\n  \"state\": \"CA\",\n  \"riskLevel\": 75,\n  \"requestedAmount\": 30000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "borrowerType is omitted. Zod validation should reject the request before it reaches the matcher."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('error envelope reports failure', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.message).to.include('borrowerType');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 - Validation error: non-numeric riskLevel",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"consumer\",\n  \"loanType\": \"student loan\",\n  \"state\": \"CA\",\n  \"riskLevel\": \"abc\",\n  \"requestedAmount\": 30000\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "riskLevel is a non-numeric string; z.coerce.number() cannot parse it."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('error names riskLevel', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.message).to.include('riskLevel');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 - Validation error: unknown field rejected",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"borrowerType\": \"consumer\",\n  \"loanType\": \"student loan\",\n  \"state\": \"CA\",\n  \"riskLevel\": 75,\n  \"requestedAmount\": 30000,\n  \"extraField\": \"nope\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/applicationMatch", "host": ["{{baseUrl}}"], "path": ["applicationMatch"] },
+            "description": "The schema is .strict(), so an unrecognized key must be rejected rather than silently ignored."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test('error names the unrecognized key', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(false);",
+                  "  pm.expect(body.error.message).to.include('extraField');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "health",
+      "item": [
+        {
+          "name": "12 - Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/health", "host": ["{{baseUrl}}"], "path": ["health"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('reports ok status', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.success).to.eql(true);",
+                  "  pm.expect(body.data.status).to.eql('ok');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

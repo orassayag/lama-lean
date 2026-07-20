@@ -11,4 +11,6 @@ export const OPERATOR_PREDICATES: Record<Operator, (fieldValue: unknown, ruleVal
   gt: (fieldValue, ruleValue) =>
     typeof fieldValue === 'number' && typeof ruleValue === 'number' && fieldValue > ruleValue,
   in: (fieldValue, ruleValue) => Array.isArray(ruleValue) && ruleValue.includes(fieldValue),
+  co: (fieldValue, ruleValue) =>
+    typeof fieldValue === 'string' && typeof ruleValue === 'string' && fieldValue.includes(ruleValue),
 };
