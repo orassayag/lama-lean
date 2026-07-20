@@ -13,4 +13,4 @@ logic first, then the thin API layer + docs built on top of it.
 
 ## Stages
 - Stage 1: COMMITTED — Constraint engine core: types/schemas, lender roster config, operator→predicate matching + priority sort, unit tests
-- Stage 2: PLANNED — API layer: controller, route, app wiring, integration tests, README (Persistence model + Postman/curl instructions)
+- Stage 2: COMMITTED — API layer: controller, route, app wiring, integration tests, README (Persistence model + Postman/curl instructions)
