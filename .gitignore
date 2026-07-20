@@ -1,0 +1,23 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.local
+
+# Workflow: working drafts, never part of the submitted repo
+docs/pre-plans/
+
+# Secrets & credentials — never commit (workflow-wide hygiene)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keychain
+*.keychain-db
+*.dump
+*.sql.gz
