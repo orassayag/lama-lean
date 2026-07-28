@@ -3,3 +3,4 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - eslint@10.8.0
   - express-rate-limit@8.6.1
+  - '@types/node@26.1.2'
