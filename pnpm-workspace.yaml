@@ -24,3 +24,4 @@ minimumReleaseAgeExclude:
   - '@types/node@26.2.0'
   - eslint@10.8.1
   - tsx@4.23.11
+  - tsx@4.23.12
